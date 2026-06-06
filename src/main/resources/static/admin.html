@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin – 3D Print Shop</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    nav {
+      background: #1a1a1a;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #333;
+    }
+
+    nav h1 { color: #00d4aa; font-size: 1.4rem; letter-spacing: 2px; }
+    nav a  { color: #aaa; text-decoration: none; margin-left: 1.5rem; }
+    nav a:hover { color: #00d4aa; }
+
+    .admin-badge {
+      background: #00d4aa22;
+      color: #00d4aa;
+      font-size: 0.75rem;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 0.75rem;
+    }
+
+    .container { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    section { margin-bottom: 3rem; }
+
+    h2 {
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      color: #fff;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    th {
+      color: #00d4aa;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    tr:hover td { background: #1a1a1a; }
+    .btn-danger {
+      background: transparent;
+      color: #ff6b6b;
+      border: 1px solid #ff6b6b44;
+      padding: 0.3rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .btn-danger:hover {
+      background: #ff6b6b22;
+    }
+    .form-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-card h3 {
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      color: #00d4aa;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .form-row input {
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .form-row input:focus { border-color: #00d4aa; }
+
+    .form-row button {
+      background: #00d4aa;
+      color: #000;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .form-row button:hover { background: #00b894; }
+
+    .btn-edit {
+      background: transparent;
+      color: #aaa;
+      border: 1px solid #33333488;
+      padding: 0.3rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      margin-right: 0.4rem;
+    }
+
+    .btn-edit:hover { border-color: #00d4aa; color: #00d4aa; }
+
+    .btn-save {
+      background: transparent;
+      color: #00d4aa;
+      border: 1px solid #00d4aa44;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        margin-right: 0.4rem;
+      }
+
+    .btn-save:hover { background: #00d4aa22; }
+
+     .inline-input {
+        background: #0f0f0f;
+        border: 1px solid #00d4aa66;
+        color: #fff;
+        padding: 0.3rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        width: 100%;
+      }
+    .status-select {
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: bold;
+  cursor: pointer;
+  outline: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-PENDING     { background: #f39c1222; color: #f39c12; }
+.status-IN_PROGRESS { background: #3498db22; color: #3498db; }
+.status-COMPLETED   { background: #00d4aa22; color: #00d4aa; }
+.status-CANCELLED   { background: #ff6b6b22; color: #ff6b6b; }
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #00d4aa;
+  color: #000;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.toast.show { opacity: 1; }
+  </style>
+</head>
+<script>
+  // ── Toast ────────────────────────────────────────────────────────
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.style.background = isError ? '#ff6b6b' : '#00d4aa';
+    toast.style.color = isError ? '#fff' : '#000';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // ── Products ─────────────────────────────────────────────────────
+  async function loadProducts() {
+    document.getElementById('products-container').innerHTML =
+      '<p style="color:#555">Loading...</p>';
+    try {
+      const res = await fetch('/api/products');
+      const products = await res.json();
+      renderProducts(products);
+    } catch {
+      showToast('Failed to load products.', true);
+    }
+  }
+
+  function renderProducts(products) {
+    const container = document.getElementById('products-container');
+    if (products.length === 0) {
+      container.innerHTML = '<p style="color:#555">No products yet.</p>';
+      return;
+    }
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Material</th>
+            <th>Price</th><th>Stock</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${products.map(p => `
+            <tr>
+              <td>${p.id}</td>
+              <td>${p.name}</td>
+              <td>${p.material}</td>
+              <td>$${p.price.toFixed(2)}</td>
+              <td>${p.stock}</td>
+              <td>
+                <button class="btn-edit" onclick="editProduct(${p.id})">Edit</button>
+                <button class="btn-danger" onclick="deleteProduct(${p.id})">Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  async function addProduct() {
+    const product = {
+      name:        document.getElementById('p-name').value,
+      description: document.getElementById('p-description').value,
+      material:    document.getElementById('p-material').value,
+      price:       parseFloat(document.getElementById('p-price').value),
+      stock:       parseInt(document.getElementById('p-stock').value)
+    };
+
+    if (!product.name || !product.price || !product.stock) {
+      showToast('Name, price and stock are required.', true);
+      return;
+    }
+
+    try {
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product)
+      });
+      ['p-name','p-description','p-material','p-price','p-stock']
+        .forEach(id => document.getElementById(id).value = '');
+      showToast(`${product.name} added!`);
+      loadProducts();
+    } catch {
+      showToast('Failed to add product.', true);
+    }
+  }
+
+  function editProduct(id) {
+    const row = document.querySelector(`button[onclick="editProduct(${id})"]`).closest('tr');
+    const cells = row.querySelectorAll('td');
+    const name     = cells[1].innerText;
+    const material = cells[2].innerText;
+    const price    = cells[3].innerText.replace('$','');
+    const stock    = cells[4].innerText;
+
+    cells[1].innerHTML = `<input class="inline-input" value="${name}"/>`;
+    cells[2].innerHTML = `<input class="inline-input" value="${material}"/>`;
+    cells[3].innerHTML = `<input class="inline-input" type="number" step="0.01" value="${price}"/>`;
+    cells[4].innerHTML = `<input class="inline-input" type="number" value="${stock}"/>`;
+    cells[5].innerHTML = `
+      <button class="btn-save"   onclick="saveProduct(${id}, this)">Save</button>
+      <button class="btn-danger" onclick="loadProducts()">Cancel</button>
+    `;
+  }
+
+  async function saveProduct(id, btn) {
+    const row   = btn.closest('tr');
+    const cells = row.querySelectorAll('td');
+    const updated = {
+      id,
+      name:        cells[1].querySelector('input').value,
+      description: '',
+      material:    cells[2].querySelector('input').value,
+      price:       parseFloat(cells[3].querySelector('input').value),
+      stock:       parseInt(cells[4].querySelector('input').value)
+    };
+
+    try {
+      await fetch(`/api/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      showToast('Product updated!');
+      loadProducts();
+    } catch {
+      showToast('Failed to update product.', true);
+    }
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm('Delete this product?')) return;
+    try {
+      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      showToast('Product deleted.');
+      loadProducts();
+    } catch {
+      showToast('Failed to delete product.', true);
+    }
+  }
+
+  // ── Orders ───────────────────────────────────────────────────────
+  async function loadOrders() {
+    document.getElementById('orders-container').innerHTML =
+      '<p style="color:#555">Loading...</p>';
+    try {
+      const res = await fetch('/api/orders');
+      const orders = await res.json();
+      renderOrders(orders);
+    } catch {
+      showToast('Failed to load orders.', true);
+    }
+  }
+
+  function renderOrders(orders) {
+    const container = document.getElementById('orders-container');
+    if (orders.length === 0) {
+      container.innerHTML = '<p style="color:#555">No orders yet.</p>';
+      return;
+    }
+
+    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Product</th><th>Customer</th>
+            <th>Email</th><th>Qty</th><th>Status</th>
+            <th>Placed</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${orders.map(o => `
+            <tr>
+              <td>${o.id}</td>
+              <td>${o.product.name}</td>
+              <td>${o.customerName}</td>
+              <td>${o.customerEmail}</td>
+              <td>${o.quantity}</td>
+              <td>
+                <select class="status-select status-${o.status}"
+                        onchange="updateStatus(${o.id}, this)">
+                  <option value="PENDING"     ${o.status==='PENDING'     ?'selected':''}>Pending</option>
+                  <option value="IN_PROGRESS" ${o.status==='IN_PROGRESS' ?'selected':''}>In Progress</option>
+                  <option value="COMPLETED"   ${o.status==='COMPLETED'   ?'selected':''}>Completed</option>
+                  <option value="CANCELLED"   ${o.status==='CANCELLED'   ?'selected':''}>Cancelled</option>
+                </select>
+              </td>
+              <td>${formatDate(o.createdAt)}</td>
+              <td>
+                <button class="btn-danger" onclick="deleteOrder(${o.id})">Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  async function updateStatus(id, selectEl) {
+    const status = selectEl.value;
+    try {
+      await fetch(`/api/orders/${id}/status?status=${status}`, {
+        method: 'PATCH'
+      });
+      selectEl.className = `status-select status-${status}`;
+      showToast(`Status updated to ${status.replace('_',' ')}.`);
+    } catch {
+      showToast('Failed to update status.', true);
+    }
+  }
+
+  async function deleteOrder(id) {
+    if (!confirm('Delete this order?')) return;
+    try {
+      await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+      showToast('Order deleted.');
+      loadOrders();
+    } catch {
+      showToast('Failed to delete order.', true);
+    }
+  }
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleString('en-AU', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProducts();
+    loadOrders();
+  });
+</script>
+<body>
+
+<nav>
+  <h1>⬡ PRINT3D <span class="admin-badge">ADMIN</span></h1>
+  <div>
+    <a href="index.html">Shop</a>
+    <a href="orders.html">Orders</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="form-card">
+    <h3>Add Product</h3>
+    <div class="form-row">
+      <input id="p-name"        type="text"   placeholder="Name" />
+      <input id="p-description" type="text"   placeholder="Description" />
+      <input id="p-material"    type="text"   placeholder="Material (PLA, PETG...)" />
+      <input id="p-price"       type="number" placeholder="Price" step="0.01" />
+      <input id="p-stock"       type="number" placeholder="Stock" />
+      <button onclick="addProduct()">Add Product</button>
+    </div>
+  </div>
+  <section id="products-section">
+    <h2>PRODUCTS</h2>
+    <div id="products-container">Loading...</div>
+  </section>
+
+  <section id="orders-section">
+    <h2>ORDERS</h2>
+    <div id="orders-container">Loading...</div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>3D Print Shop</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          font-family: 'Segoe UI', sans-serif;
+          background: #0f0f0f;
+          color: #e0e0e0;
+          min-height: 100vh;
+        }
+
+        nav {
+          background: #1a1a1a;
+          padding: 1rem 2rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #333;
+        }
+
+        nav h1 { color: #00d4aa; font-size: 1.4rem; letter-spacing: 2px; }
+        nav a  { color: #aaa; text-decoration: none; margin-left: 1.5rem; }
+        nav a:hover { color: #00d4aa; }
+
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+
+        h2 { margin-bottom: 1.5rem; color: #fff; font-size: 1.2rem; letter-spacing: 1px; }
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 1.5rem;
+        }
+
+        .card {
+          background: #1a1a1a;
+          border: 1px solid #2a2a2a;
+          border-radius: 10px;
+          padding: 1.5rem;
+          transition: border-color 0.2s;
+        }
+
+        .card:hover { border-color: #00d4aa; }
+
+        .card h3 { color: #fff; margin-bottom: 0.5rem; }
+        .card p  { color: #888; font-size: 0.9rem; margin-bottom: 0.4rem; }
+
+        .material-tag {
+          display: inline-block;
+          background: #00d4aa22;
+          color: #00d4aa;
+          font-size: 0.75rem;
+          padding: 2px 8px;
+          border-radius: 20px;
+          margin-bottom: 1rem;
+        }
+
+        .price { font-size: 1.3rem; color: #00d4aa; font-weight: bold; margin-bottom: 1rem; }
+
+        .stock { font-size: 0.8rem; color: #666; margin-bottom: 1rem; }
+        .stock.low { color: #ff6b6b; }
+
+        button {
+          background: #00d4aa;
+          color: #000;
+          border: none;
+          padding: 0.6rem 1.2rem;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: bold;
+          font-size: 0.9rem;
+          width: 100%;
+          transition: background 0.2s;
+        }
+
+        button:hover { background: #00b894; }
+        button:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        .toast {
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
+          background: #00d4aa;
+          color: #000;
+          padding: 0.8rem 1.5rem;
+          border-radius: 8px;
+          font-weight: bold;
+          opacity: 0;
+          transition: opacity 0.3s;
+          pointer-events: none;
+        }
+
+        .toast.show { opacity: 1; }
+        .error { color: #ff6b6b; text-align: center; padding: 2rem; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1>⬡ PRINT3D</h1>
+    <div>
+        <a href="index.html">Products</a>
+        <a href="orders.html">My Orders</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>AVAILABLE MODELS</h2>
+    <div class="grid" id="product-grid">
+        <p style="color:#666">Loading products...</p>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // ── Load all products on page load ──────────────────────────────
+    async function loadProducts() {
+      try {
+        const res = await fetch('/api/products');
+        const products = await res.json();
+        renderProducts(products);
+      } catch (err) {
+        document.getElementById('product-grid').innerHTML =
+          '<p class="error">Failed to load products.</p>';
+      }
+    }
+
+    // ── Build the HTML cards from the product array ─────────────────
+    function renderProducts(products) {
+      const grid = document.getElementById('product-grid');
+
+      if (products.length === 0) {
+        grid.innerHTML = '<p style="color:#666">No products available.</p>';
+        return;
+      }
+
+      grid.innerHTML = products.map(p => `
+        <div class="card">
+          <h3>${p.name}</h3>
+          <span class="material-tag">${p.material}</span>
+          <p>${p.description}</p>
+          <div class="price">$${p.price.toFixed(2)}</div>
+          <div class="stock ${p.stock < 10 ? 'low' : ''}">
+            ${p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'}
+          </div>
+          <button
+            onclick="orderProduct(${p.id}, '${p.name}')"
+            ${p.stock === 0 ? 'disabled' : ''}>
+            Order Now
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // ── Quick-order: prompt for name/email then POST /api/orders ────
+    async function orderProduct(productId, productName) {
+      const customerName  = prompt(`Your name:`);
+      if (!customerName) return;
+
+      const customerEmail = prompt(`Your email:`);
+      if (!customerEmail) return;
+
+      const quantityStr = prompt(`Quantity for "${productName}":`, '1');
+      const quantity = parseInt(quantityStr);
+      if (!quantity || quantity < 1) return;
+
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product: { id: productId },
+            quantity,
+            customerName,
+            customerEmail
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          showToast('Error: ' + err, true);
+          return;
+        }
+
+        showToast(`Order placed for ${productName}!`);
+        loadProducts(); // refresh stock count
+      } catch (err) {
+        showToast('Something went wrong.', true);
+      }
+    }
+
+    // ── Simple toast notification ────────────────────────────────────
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.background = isError ? '#ff6b6b' : '#00d4aa';
+      toast.style.color = isError ? '#fff' : '#000';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    loadProducts();
+</script>
+</body>
+</html>
