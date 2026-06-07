@@ -166,38 +166,53 @@
         width: 100%;
       }
     .status-select {
-  border: none;
-  padding: 0.3rem 0.6rem;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: bold;
-  cursor: pointer;
-  outline: none;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    cursor: pointer;
+    outline: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
 
-.status-PENDING     { background: #f39c1222; color: #f39c12; }
-.status-IN_PROGRESS { background: #3498db22; color: #3498db; }
-.status-COMPLETED   { background: #00d4aa22; color: #00d4aa; }
-.status-CANCELLED   { background: #ff6b6b22; color: #ff6b6b; }
+  .status-PENDING     { background: #f39c1222; color: #f39c12; }
+  .status-IN_PROGRESS { background: #3498db22; color: #3498db; }
+  .status-COMPLETED   { background: #00d4aa22; color: #00d4aa; }
+  .status-CANCELLED   { background: #ff6b6b22; color: #ff6b6b; }
 
-.toast {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  background: #00d4aa;
-  color: #000;
-  padding: 0.8rem 1.5rem;
-  border-radius: 8px;
-  font-weight: bold;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-  z-index: 999;
-}
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #00d4aa;
+    color: #000;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 999;
+  }
 
-.toast.show { opacity: 1; }
+  .toast.show { opacity: 1; }
+      .error-list {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .error-item {
+    color: #ff6b6b;
+    font-size: 0.82rem;
+    padding: 0.3rem 0.6rem;
+    background: #ff6b6b11;
+    border-left: 2px solid #ff6b6b;
+    border-radius: 3px;
+  }
   </style>
 </head>
 <script>
@@ -258,6 +273,8 @@
   }
 
   async function addProduct() {
+    clearErrors('product-errors');   // clear previous errors first
+
     const product = {
       name:        document.getElementById('p-name').value,
       description: document.getElementById('p-description').value,
@@ -266,23 +283,27 @@
       stock:       parseInt(document.getElementById('p-stock').value)
     };
 
-    if (!product.name || !product.price || !product.stock) {
-      showToast('Name, price and stock are required.', true);
-      return;
-    }
-
     try {
-      await fetch('/api/products', {
+      const res = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(product)
       });
+
+      if (!res.ok) {
+        const data = await res.json();
+        showErrors('product-errors', data.errors);  // display each error
+        return;
+      }
+
       ['p-name','p-description','p-material','p-price','p-stock']
         .forEach(id => document.getElementById(id).value = '');
+      clearErrors('product-errors');
       showToast(`${product.name} added!`);
       loadProducts();
+
     } catch {
-      showToast('Failed to add product.', true);
+      showErrors('product-errors', ['Network error — is the server running?']);
     }
   }
 
@@ -430,6 +451,17 @@
     });
   }
 
+  function showErrors(containerId, errors) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = errors
+      .map(e => `<div class="error-item">⚠ ${e}</div>`)
+      .join('');
+  }
+
+  function clearErrors(containerId) {
+    document.getElementById(containerId).innerHTML = '';
+  }
+
   // ── Init ─────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
@@ -457,6 +489,7 @@
       <input id="p-stock"       type="number" placeholder="Stock" />
       <button onclick="addProduct()">Add Product</button>
     </div>
+    <div id="product-errors" class="error-list"></div>
   </div>
   <section id="products-section">
     <h2>PRODUCTS</h2>
