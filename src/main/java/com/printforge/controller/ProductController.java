@@ -2,6 +2,7 @@ package com.printforge.controller;
 
 import com.printforge.model.Product;
 import com.printforge.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +27,12 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> create(@RequestBody Product product) {
+    public ResponseEntity<Product> create(@Valid @RequestBody Product product) {
         return ResponseEntity.ok(productService.create(product));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> update(@PathVariable Long id, @RequestBody Product product) {
+    public ResponseEntity<Product> update(@PathVariable Long id,@Valid @RequestBody Product product) {
         return ResponseEntity.ok(productService.update(id, product));
     }
 

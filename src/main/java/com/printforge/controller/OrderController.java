@@ -2,6 +2,7 @@ package com.printforge.controller;
 
 import com.printforge.model.Order;
 import com.printforge.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<Order> create(@RequestBody Order order) {
+    public ResponseEntity<Order> create(@Valid @RequestBody Order order) {
         return ResponseEntity.ok(orderService.create(order));
     }
 
