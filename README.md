@@ -26,7 +26,7 @@ Covers the full request lifecycle from browser → controller → service → re
 ### 1. Create the database
 
 ```sql
-CREATE DATABASE printshop;
+CREATE DATABASE printforge;
 ```
 
 ### 2. Copy the example config
