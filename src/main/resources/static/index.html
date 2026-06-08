@@ -97,6 +97,22 @@
 
         .toast.show { opacity: 1; }
         .error { color: #ff6b6b; text-align: center; padding: 2rem; }
+
+        footer {
+          text-align: center;
+          padding: 2rem;
+          margin-top: 3rem;
+          border-top: 1px solid #1a1a1a;
+        }
+
+        footer a {
+          color: #2a2a2a;
+          font-size: 0.75rem;
+          text-decoration: none;
+          letter-spacing: 1px;
+        }
+
+        footer a:hover { color: #555; }
     </style>
 </head>
 <body>
@@ -117,6 +133,9 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<footer>
+    <a href="/login.html">Admin</a>
+</footer>
 
 <script>
     // ── Load all products on page load ──────────────────────────────

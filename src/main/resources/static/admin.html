@@ -216,7 +216,34 @@
   </style>
 </head>
 <script>
-  // ── Toast ────────────────────────────────────────────────────────
+  // ── Auth guard ────────────────────────────────────────────────
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/login.html';
+
+  function logout() {
+    localStorage.removeItem('token');
+    window.location.href = '/login.html';
+  }
+
+  // ── Auth headers helper ───────────────────────────────────────
+  function authHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  }
+
+  // ── Handle 401 globally ───────────────────────────────────────
+  function handle401(res) {
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+      return true;
+    }
+    return false;
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────
   function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -226,12 +253,23 @@
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  // ── Products ─────────────────────────────────────────────────────
+  function showErrors(containerId, errors) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = errors
+      .map(e => `<div class="error-item">⚠ ${e}</div>`)
+      .join('');
+  }
+
+  function clearErrors(containerId) {
+    document.getElementById(containerId).innerHTML = '';
+  }
+
+  // ── Products ──────────────────────────────────────────────────
   async function loadProducts() {
     document.getElementById('products-container').innerHTML =
       '<p style="color:#555">Loading...</p>';
     try {
-      const res = await fetch('/api/products');
+      const res = await fetch('/api/products');  // public, no token needed
       const products = await res.json();
       renderProducts(products);
     } catch {
@@ -273,8 +311,7 @@
   }
 
   async function addProduct() {
-    clearErrors('product-errors');   // clear previous errors first
-
+    clearErrors('product-errors');
     const product = {
       name:        document.getElementById('p-name').value,
       description: document.getElementById('p-description').value,
@@ -283,16 +320,23 @@
       stock:       parseInt(document.getElementById('p-stock').value)
     };
 
+    if (!product.name || !product.price || !product.stock) {
+      showToast('Name, price and stock are required.', true);
+      return;
+    }
+
     try {
       const res = await fetch('/api/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),             // ← token attached
         body: JSON.stringify(product)
       });
 
+      if (handle401(res)) return;           // ← expired token check
+
       if (!res.ok) {
         const data = await res.json();
-        showErrors('product-errors', data.errors);  // display each error
+        showErrors('product-errors', data.errors);
         return;
       }
 
@@ -301,9 +345,8 @@
       clearErrors('product-errors');
       showToast(`${product.name} added!`);
       loadProducts();
-
     } catch {
-      showErrors('product-errors', ['Network error — is the server running?']);
+      showToast('Network error.', true);
     }
   }
 
@@ -338,11 +381,19 @@
     };
 
     try {
-      await fetch(`/api/products/${id}`, {
+      const res = await fetch(`/api/products/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),             // ← token attached
         body: JSON.stringify(updated)
       });
+
+      if (handle401(res)) return;           // ← expired token check
+
+      if (!res.ok) {
+        showToast('Failed to update product.', true);
+        return;
+      }
+
       showToast('Product updated!');
       loadProducts();
     } catch {
@@ -353,7 +404,13 @@
   async function deleteProduct(id) {
     if (!confirm('Delete this product?')) return;
     try {
-      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders()              // ← token attached
+      });
+
+      if (handle401(res)) return;           // ← expired token check
+
       showToast('Product deleted.');
       loadProducts();
     } catch {
@@ -361,12 +418,17 @@
     }
   }
 
-  // ── Orders ───────────────────────────────────────────────────────
+  // ── Orders ────────────────────────────────────────────────────
   async function loadOrders() {
     document.getElementById('orders-container').innerHTML =
       '<p style="color:#555">Loading...</p>';
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch('/api/orders', {
+        headers: authHeaders()              // ← token attached
+      });
+
+      if (handle401(res)) return;           // ← expired token check
+
       const orders = await res.json();
       renderOrders(orders);
     } catch {
@@ -423,9 +485,13 @@
   async function updateStatus(id, selectEl) {
     const status = selectEl.value;
     try {
-      await fetch(`/api/orders/${id}/status?status=${status}`, {
-        method: 'PATCH'
+      const res = await fetch(`/api/orders/${id}/status?status=${status}`, {
+        method: 'PATCH',
+        headers: authHeaders()              // ← token attached
       });
+
+      if (handle401(res)) return;           // ← expired token check
+
       selectEl.className = `status-select status-${status}`;
       showToast(`Status updated to ${status.replace('_',' ')}.`);
     } catch {
@@ -436,7 +502,13 @@
   async function deleteOrder(id) {
     if (!confirm('Delete this order?')) return;
     try {
-      await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/orders/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders()              // ← token attached
+      });
+
+      if (handle401(res)) return;           // ← expired token check
+
       showToast('Order deleted.');
       loadOrders();
     } catch {
@@ -451,18 +523,7 @@
     });
   }
 
-  function showErrors(containerId, errors) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = errors
-      .map(e => `<div class="error-item">⚠ ${e}</div>`)
-      .join('');
-  }
-
-  function clearErrors(containerId) {
-    document.getElementById(containerId).innerHTML = '';
-  }
-
-  // ── Init ─────────────────────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     loadOrders();
@@ -475,6 +536,7 @@
   <div>
     <a href="index.html">Shop</a>
     <a href="orders.html">Orders</a>
+    <a onclick="logout()" style="cursor:pointer; color:#ff6b6b">Logout</a>
   </div>
 </nav>
 

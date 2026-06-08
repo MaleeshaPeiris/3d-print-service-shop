@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login – 3D Print Shop</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .login-card h1 {
+      color: #00d4aa;
+      font-size: 1.4rem;
+      letter-spacing: 2px;
+      margin-bottom: 0.4rem;
+    }
+
+    .login-card p {
+      color: #555;
+      font-size: 0.85rem;
+      margin-bottom: 2rem;
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: #888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    input {
+      width: 100%;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: #00d4aa; }
+
+    button {
+      width: 100%;
+      background: #00d4aa;
+      color: #000;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1.5rem;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #00b894; }
+    button:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+    .error-msg {
+      color: #ff6b6b;
+      font-size: 0.85rem;
+      margin-top: 1rem;
+      padding: 0.6rem 0.8rem;
+      background: #ff6b6b11;
+      border-left: 2px solid #ff6b6b;
+      border-radius: 3px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+  <h1>⬡ PRINT3D</h1>
+  <p>Admin access only</p>
+
+  <div class="field">
+    <label>Username</label>
+    <input type="text" id="username" placeholder="admin" />
+  </div>
+
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" />
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <button id="login-btn" onclick="login()">Login</button>
+</div>
+
+<script>
+  // ── If already logged in, go straight to admin ───────────────
+  if (localStorage.getItem('token')) {
+    window.location.href = '/admin.html';
+  }
+
+  // ── Allow pressing Enter to submit ───────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  // ── Login function ────────────────────────────────────────────
+  async function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const btn      = document.getElementById('login-btn');
+    const errorMsg = document.getElementById('error-msg');
+
+    // hide previous errors
+    errorMsg.style.display = 'none';
+
+    if (!username || !password) {
+      showError('Please enter both username and password.');
+      return;
+    }
+
+    // disable button while request is in flight
+    btn.disabled = true;
+    btn.textContent = 'Logging in...';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (!res.ok) {
+        showError('Invalid username or password.');
+        return;
+      }
+
+      const data = await res.json();
+
+      // store token and redirect to admin
+      localStorage.setItem('token', data.token);
+      window.location.href = '/admin.html';
+
+    } catch {
+      showError('Network error — is the server running?');
+    } finally {
+      // re-enable button whether it succeeded or failed
+      btn.disabled = false;
+      btn.textContent = 'Login';
+    }
+  }
+
+  function showError(message) {
+    const errorMsg = document.getElementById('error-msg');
+    errorMsg.textContent = message;
+    errorMsg.style.display = 'block';
+  }
+</script>
+
+</body>
+</html>

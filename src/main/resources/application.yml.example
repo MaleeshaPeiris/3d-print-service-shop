@@ -1,12 +1,8 @@
 spring:
-  application:
-    name: printforge
-
   datasource:
     url: jdbc:postgresql://localhost:5432/printforge
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:yourpassword}
-    driver-class-name: org.postgresql.Driver
+    username: YOUR_DB_USERNAME
+    password: YOUR_DB_PASSWORD
 
   jpa:
     hibernate:
@@ -20,3 +16,8 @@ spring:
     init:
       mode: always
       data-locations: classpath:data.sql
+
+# JWT config
+jwt:
+  secret: YOUR_JWT_SECRET_MIN_32_CHARACTERS
+  expiration: 86400000
