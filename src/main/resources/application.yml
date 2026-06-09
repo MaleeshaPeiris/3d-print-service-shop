@@ -1,7 +1,7 @@
 spring:
   spring:
     datasource:
-      url: jdbc:postgresql://${SPRING_DATASOURCE_URL}
+      url: ${SPRING_DATASOURCE_URL}
       username: ${POSTGRES_USER}
       password: ${POSTGRES_PASSWORD}
   jpa:
