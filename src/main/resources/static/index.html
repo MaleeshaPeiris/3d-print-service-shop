@@ -202,8 +202,8 @@
         });
 
         if (!res.ok) {
-          const err = await res.text();
-          showToast('Error: ' + err, true);
+          const data = await res.json();
+          showToast('Error: ' + data.errors.join(', '), true);
           return;
         }
 

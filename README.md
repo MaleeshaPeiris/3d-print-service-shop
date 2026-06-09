@@ -7,7 +7,7 @@ Covers the full request lifecycle from browser → controller → service → re
 
 - Java 17 + Spring Boot 3
 - PostgreSQL + Spring Data JPA
-- JWT Authentication (jjwt 0.12.6)
+- JWT Authentication (jwt 0.12.6)
 - Bean Validation (jakarta.validation)
 - Vanilla HTML + CSS + JavaScript
 
