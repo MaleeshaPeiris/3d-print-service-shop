@@ -317,9 +317,9 @@
     document.getElementById(containerId).innerHTML = '';
   }
 
-  // ── State for pagination and search ──────────────────────────
+  // ── State for pagination and search for Products ──────────────────────────
   let currentProductPage = 0;
-  let currentSearchTerm = '';
+  let currentProductSearchTerm = '';
 
   //products
   async function loadProducts(page = 0) {
@@ -330,15 +330,15 @@
 
     try {
       let url = `/api/products?page=${page}&size=10`;
-      if (currentSearchTerm) {
-        url += `&search=${encodeURIComponent(currentSearchTerm)}`;
+      if (currentProductSearchTerm) {
+        url += `&search=${encodeURIComponent(currentProductSearchTerm)}`;
       }
 
       const res = await fetch(url);
       const data = await res.json();
 
       renderProducts(data.content);
-      renderPagination(data);
+      renderProductPagination(data);
     } catch {
       showToast('Failed to load products.', true);
     }
@@ -377,7 +377,7 @@
     `;
   }
 
-  function renderPagination(data) {
+  function renderProductPagination(data) {
     const container = document.getElementById('products-pagination');
 
     if (data.totalPages <= 1) {
@@ -397,13 +397,13 @@
   }
 
   function searchProducts() {
-    currentSearchTerm = document.getElementById('product-search').value.trim();
+    currentProductSearchTerm = document.getElementById('product-search').value.trim();
     loadProducts(0);   // always reset to first page on a new search
   }
 
-  function clearSearch() {
+  function clearProductSearch() {
     document.getElementById('product-search').value = '';
-    currentSearchTerm = '';
+    currentProductSearchTerm = '';
     loadProducts(0);
   }
 
@@ -515,19 +515,28 @@
     }
   }
 
-  // Orders
-  async function loadOrders() {
+  // ── State for pagination and search for Orders ──────────────────────────
+  let currentOrderPage = 0;
+  let currentOrderSearchTerm = '';
+
+  //Orders
+  async function loadOrders(page = 0) {
     document.getElementById('orders-container').innerHTML =
       '<p style="color:#555">Loading...</p>';
+
+    currentOrderPage = page;
+
     try {
-      const res = await fetch('/api/orders', {
-        headers: authHeaders()              // ← token attached
-      });
+      let url = `/api/orders?page=${page}&size=10`;
+      if (currentOrderSearchTerm) {
+        url += `&search=${encodeURIComponent(currentOrderSearchTerm)}`;
+      }
 
-      if (handle401(res)) return;           // ← expired token check
+      const res = await fetch(url);
+      const data = await res.json();
 
-      const orders = await res.json();
-      renderOrders(orders);
+      renderOrders(data.content);
+      renderOrderPagination(data);
     } catch {
       showToast('Failed to load orders.', true);
     }
@@ -579,6 +588,36 @@
     `;
   }
 
+  function renderOrderPagination(data) {
+    const container = document.getElementById('orders-pagination');
+
+    if (data.totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `
+      <button onclick="loadOrders(${data.number - 1})" ${data.first ? 'disabled' : ''}>
+        ← Previous
+      </button>
+      <span>Page ${data.number + 1} of ${data.totalPages}</span>
+      <button onclick="loadOrders(${data.number + 1})" ${data.last ? 'disabled' : ''}>
+        Next →
+      </button>
+    `;
+  }
+
+   function searchOrders() {
+    currentOrderSearchTerm = document.getElementById('order-search').value.trim();
+    loadOrders(0);   // always reset to first page on a new search
+  }
+
+  function clearOrderSearch() {
+    document.getElementById('order-search').value = '';
+    currentOrderSearchTerm = '';
+    loadOrders(0);
+  }
+
   async function updateStatus(id, selectEl) {
     const status = selectEl.value;
     try {
@@ -607,7 +646,7 @@
       if (handle401(res)) return;           // ← expired token check
 
       showToast('Order deleted.');
-      loadOrders();
+      loadOrders(currentOrderPage);
     } catch {
       showToast('Failed to delete order.', true);
     }
@@ -658,7 +697,7 @@
     <div class="search-row">
       <input id="product-search" type="text" placeholder="Search products..." onkeydown="if(event.key==='Enter') searchProducts()" />
       <button onclick="searchProducts()">Search</button>
-      <button class="btn-edit" onclick="clearSearch()">Clear</button>
+      <button class="btn-edit" onclick="clearProductSearch()">Clear</button>
     </div>
 
     <div id="products-container">Loading...</div>
@@ -669,7 +708,13 @@
 
   <section id="orders-section">
     <h2>ORDERS</h2>
+    <div class="search-row">
+      <input id="order-search" type="text" placeholder="Search orders..." onkeydown="if(event.key==='Enter') searchOrders()" />
+      <button onclick="searchOrders()">Search</button>
+      <button class="btn-edit" onclick="clearOrderSearch()">Clear</button>
+    </div>
     <div id="orders-container">Loading...</div>
+    <div class="pagination" id="orders-pagination"></div>
   </section>
 
 </div>

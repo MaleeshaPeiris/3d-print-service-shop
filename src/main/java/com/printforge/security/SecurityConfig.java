@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,  "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()      // ← add this
                         .requestMatchers(HttpMethod.GET,  "/api/orders/customer").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/orders/**").permitAll()
 
                         // Everything else requires a valid token
                         .anyRequest().authenticated()

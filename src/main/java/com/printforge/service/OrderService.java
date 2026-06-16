@@ -5,6 +5,9 @@ import com.printforge.model.Order;
 import com.printforge.model.Product;
 import com.printforge.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,8 +19,14 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductService productService;
 
-    public List<Order> getAll() {
-        return orderRepository.findAll();
+    public Page<Order> getAll(int page, int size, String search) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        if (search != null && !search.isBlank()) {
+            return orderRepository.findByCustomerNameContainingIgnoreCase(search, pageable);
+        }
+
+        return orderRepository.findAll(pageable);
     }
 
     public Order getById(Long id) {
