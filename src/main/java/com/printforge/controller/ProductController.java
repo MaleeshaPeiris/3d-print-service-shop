@@ -4,6 +4,7 @@ import com.printforge.model.Product;
 import com.printforge.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +18,12 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public List<Product> getAll() {
-        return productService.getAll();
+    public Page<Product> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search) {
+
+        return productService.getAll(page, size, search);
     }
 
     @GetMapping("/{id}")

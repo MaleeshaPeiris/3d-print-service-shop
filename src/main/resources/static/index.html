@@ -113,6 +113,27 @@
         }
 
         footer a:hover { color: #555; }
+        .pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination button {
+  background: #1a1a1a;
+  color: #00d4aa;
+  border: 1px solid #00d4aa44;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.pagination button:hover { background: #00d4aa22; }
+.pagination button:disabled { color: #444; border-color: #333; cursor: not-allowed; }
+.pagination span { color: #888; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -130,6 +151,7 @@
     <div class="grid" id="product-grid">
         <p style="color:#666">Loading products...</p>
     </div>
+    <div class="pagination" id="pagination"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -139,16 +161,46 @@
 
 <script>
     // ── Load all products on page load ──────────────────────────────
-    async function loadProducts() {
-      try {
-        const res = await fetch('/api/products');
-        const products = await res.json();
-        renderProducts(products);
-      } catch (err) {
-        document.getElementById('product-grid').innerHTML =
-          '<p class="error">Failed to load products.</p>';
-      }
+let currentPage = 0;
+let currentSearch = '';
+
+async function loadProducts(page = 0) {
+  currentPage = page;
+  try {
+    let url = `/api/products?page=${page}&size=12`;
+    if (currentSearch) {
+      url += `&search=${encodeURIComponent(currentSearch)}`;
     }
+
+    const res = await fetch(url);
+    const data = await res.json();
+    renderProducts(data.content);
+    renderPagination(data);
+  } catch (err) {
+    document.getElementById('product-grid').innerHTML =
+      '<p class="error">Failed to load products.</p>';
+  }
+}
+
+function renderPagination(data) {
+  const container = document.getElementById('pagination');
+  if (!container) return;
+
+  if (data.totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = `
+    <button onclick="loadProducts(${data.number - 1})" ${data.first ? 'disabled' : ''}>
+      ← Previous
+    </button>
+    <span>Page ${data.number + 1} of ${data.totalPages}</span>
+    <button onclick="loadProducts(${data.number + 1})" ${data.last ? 'disabled' : ''}>
+      Next →
+    </button>
+  `;
+}
 
     // ── Build the HTML cards from the product array ─────────────────
     function renderProducts(products) {
@@ -208,7 +260,7 @@
         }
 
         showToast(`Order placed for ${productName}!`);
-        loadProducts(); // refresh stock count
+        loadProducts(currentPage); // refresh stock count
       } catch (err) {
         showToast('Something went wrong.', true);
       }

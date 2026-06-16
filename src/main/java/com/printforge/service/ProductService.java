@@ -3,6 +3,9 @@ package com.printforge.service;
 import com.printforge.model.Product;
 import com.printforge.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,8 +16,14 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public List<Product> getAll() {
-        return productRepository.findAll();
+    public Page<Product> getAll(int page, int size, String search) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        if (search != null && !search.isBlank()) {
+            return productRepository.findByNameContainingIgnoreCase(search, pageable);
+        }
+
+        return productRepository.findAll(pageable);
     }
 
     public Product getById(Long id) {

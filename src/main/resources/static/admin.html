@@ -165,45 +165,45 @@
         font-size: 0.85rem;
         width: 100%;
       }
-    .status-select {
-    border: none;
-    padding: 0.3rem 0.6rem;
-    border-radius: 20px;
-    font-size: 0.78rem;
-    font-weight: bold;
-    cursor: pointer;
-    outline: none;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+     .status-select {
+        border: none;
+        padding: 0.3rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: bold;
+        cursor: pointer;
+        outline: none;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
 
-  .status-PENDING     { background: #f39c1222; color: #f39c12; }
-  .status-IN_PROGRESS { background: #3498db22; color: #3498db; }
-  .status-COMPLETED   { background: #00d4aa22; color: #00d4aa; }
-  .status-CANCELLED   { background: #ff6b6b22; color: #ff6b6b; }
+     .status-PENDING     { background: #f39c1222; color: #f39c12; }
+     .status-IN_PROGRESS { background: #3498db22; color: #3498db; }
+     .status-COMPLETED   { background: #00d4aa22; color: #00d4aa; }
+     .status-CANCELLED   { background: #ff6b6b22; color: #ff6b6b; }
 
-  .toast {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background: #00d4aa;
-    color: #000;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
-    font-weight: bold;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    z-index: 999;
-  }
+     .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: #00d4aa;
+        color: #000;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        font-weight: bold;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        z-index: 999;
+      }
 
-  .toast.show { opacity: 1; }
-      .error-list {
-    margin-top: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-  }
+     .toast.show { opacity: 1; }
+          .error-list {
+        margin-top: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
 
   .error-item {
     color: #ff6b6b;
@@ -213,10 +213,63 @@
     border-left: 2px solid #ff6b6b;
     border-radius: 3px;
   }
+
+    .search-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-row input {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.search-row input:focus { border-color: #00d4aa; }
+
+.search-row button {
+  background: #00d4aa;
+  color: #000;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.pagination button {
+  background: #1a1a1a;
+  color: #00d4aa;
+  border: 1px solid #00d4aa44;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.pagination button:hover { background: #00d4aa22; }
+.pagination button:disabled { color: #444; border-color: #333; cursor: not-allowed; }
+
+.pagination span { color: #888; font-size: 0.85rem; }
   </style>
 </head>
 <script>
-  // ── Auth guard ────────────────────────────────────────────────
+  // Auth guard
   const token = localStorage.getItem('token');
   if (!token) window.location.href = '/login.html';
 
@@ -225,7 +278,7 @@
     window.location.href = '/login.html';
   }
 
-  // ── Auth headers helper ───────────────────────────────────────
+  // Auth headers helper
   function authHeaders() {
     return {
       'Content-Type': 'application/json',
@@ -233,7 +286,7 @@
     };
   }
 
-  // ── Handle 401 globally ───────────────────────────────────────
+  // Handle 401 globally
   function handle401(res) {
     if (res.status === 401 || res.status === 403) {
       localStorage.removeItem('token');
@@ -243,7 +296,7 @@
     return false;
   }
 
-  // ── Toast ─────────────────────────────────────────────────────
+  // Toast
   function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -264,14 +317,28 @@
     document.getElementById(containerId).innerHTML = '';
   }
 
-  // ── Products ──────────────────────────────────────────────────
-  async function loadProducts() {
+  // ── State for pagination and search ──────────────────────────
+  let currentProductPage = 0;
+  let currentSearchTerm = '';
+
+  //products
+  async function loadProducts(page = 0) {
     document.getElementById('products-container').innerHTML =
       '<p style="color:#555">Loading...</p>';
+
+    currentProductPage = page;
+
     try {
-      const res = await fetch('/api/products');  // public, no token needed
-      const products = await res.json();
-      renderProducts(products);
+      let url = `/api/products?page=${page}&size=10`;
+      if (currentSearchTerm) {
+        url += `&search=${encodeURIComponent(currentSearchTerm)}`;
+      }
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      renderProducts(data.content);
+      renderPagination(data);
     } catch {
       showToast('Failed to load products.', true);
     }
@@ -310,6 +377,36 @@
     `;
   }
 
+  function renderPagination(data) {
+    const container = document.getElementById('products-pagination');
+
+    if (data.totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `
+      <button onclick="loadProducts(${data.number - 1})" ${data.first ? 'disabled' : ''}>
+        ← Previous
+      </button>
+      <span>Page ${data.number + 1} of ${data.totalPages}</span>
+      <button onclick="loadProducts(${data.number + 1})" ${data.last ? 'disabled' : ''}>
+        Next →
+      </button>
+    `;
+  }
+
+  function searchProducts() {
+    currentSearchTerm = document.getElementById('product-search').value.trim();
+    loadProducts(0);   // always reset to first page on a new search
+  }
+
+  function clearSearch() {
+    document.getElementById('product-search').value = '';
+    currentSearchTerm = '';
+    loadProducts(0);
+  }
+
   async function addProduct() {
     clearErrors('product-errors');
     const product = {
@@ -344,7 +441,7 @@
         .forEach(id => document.getElementById(id).value = '');
       clearErrors('product-errors');
       showToast(`${product.name} added!`);
-      loadProducts();
+      loadProducts(currentProductPage);
     } catch {
       showToast('Network error.', true);
     }
@@ -364,7 +461,7 @@
     cells[4].innerHTML = `<input class="inline-input" type="number" value="${stock}"/>`;
     cells[5].innerHTML = `
       <button class="btn-save"   onclick="saveProduct(${id}, this)">Save</button>
-      <button class="btn-danger" onclick="loadProducts()">Cancel</button>
+      <button class="btn-danger" onclick="loadProducts(currentProductPage)">Cancel</button>
     `;
   }
 
@@ -395,7 +492,7 @@
       }
 
       showToast('Product updated!');
-      loadProducts();
+      loadProducts(currentProductPage);
     } catch {
       showToast('Failed to update product.', true);
     }
@@ -412,13 +509,13 @@
       if (handle401(res)) return;           // ← expired token check
 
       showToast('Product deleted.');
-      loadProducts();
+      loadProducts(currentProductPage);
     } catch {
       showToast('Failed to delete product.', true);
     }
   }
 
-  // ── Orders ────────────────────────────────────────────────────
+  // Orders
   async function loadOrders() {
     document.getElementById('orders-container').innerHTML =
       '<p style="color:#555">Loading...</p>';
@@ -523,7 +620,7 @@
     });
   }
 
-  // ── Init ──────────────────────────────────────────────────────
+  // Init
   document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     loadOrders();
@@ -553,9 +650,21 @@
     </div>
     <div id="product-errors" class="error-list"></div>
   </div>
+
   <section id="products-section">
     <h2>PRODUCTS</h2>
+
+    <!-- ── Search bar ──────────────────────────────────────── -->
+    <div class="search-row">
+      <input id="product-search" type="text" placeholder="Search products..." onkeydown="if(event.key==='Enter') searchProducts()" />
+      <button onclick="searchProducts()">Search</button>
+      <button class="btn-edit" onclick="clearSearch()">Clear</button>
+    </div>
+
     <div id="products-container">Loading...</div>
+
+    <!-- ── Pagination controls ─────────────────────────────── -->
+    <div class="pagination" id="products-pagination"></div>
   </section>
 
   <section id="orders-section">
