@@ -31,7 +31,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-yourpassword}
       JWT_SECRET: ${JWT_SECRET:-3d-print-shop-super-secret-key-change-this-in-production}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-$2y$10$RpddviE7LecnsOc1rvu5Bu7i.e.CImWkdzzdhJGyxAe0TQGI1I/Si}
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/printforge
     ports:
       - "8080:8080"

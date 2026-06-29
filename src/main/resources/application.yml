@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/printforge}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:yourpassword}
+    username: ${PGUSER:${DB_USERNAME:postgres}}
+    password: ${PGPASSWORD:${DB_PASSWORD:yourpassword}}
   jpa:
     hibernate:
       ddl-auto: update
