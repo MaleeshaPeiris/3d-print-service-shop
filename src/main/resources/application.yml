@@ -22,7 +22,8 @@ jwt:
 
 admin:
   username: ${ADMIN_USERNAME:admin}
-  password: ${ADMIN_PASSWORD:admin123}
+  # Value must be a BCrypt hash. Default = bcrypt("admin123"). Set ADMIN_PASSWORD to a BCrypt hash in production.
+  password: ${ADMIN_PASSWORD:$2y$10$RpddviE7LecnsOc1rvu5Bu7i.e.CImWkdzzdhJGyxAe0TQGI1I/Si}
 
 server:
   port: ${PORT:8080}

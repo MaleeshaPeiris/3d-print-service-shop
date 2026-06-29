@@ -36,7 +36,7 @@ public class AuthController {
         }
 
         // ── Check password ────────────────────────────────────────
-        if (!adminPassword.equals(password)) {
+        if (!passwordEncoder.matches(password, adminPassword)) {
             return ResponseEntity.status(401)
                     .body(Map.of("error", "Invalid credentials"));
         }
